@@ -72,3 +72,27 @@ it('unsubscribes from all events of all event types', () => {
   contract.push('add', 1)
   expect(addListener).not.toHaveBeenCalled()
 })
+
+it('unsubscribes from the listener using the function returned from it', () => {
+  const contract = new EventContract<Events>(useEventTarget())
+
+  const firstGreetListener = vi.fn()
+  const secondGreetListener = vi.fn()
+  const unsubscribe = contract.subscribe('greet', firstGreetListener)
+  const secondUnsubscribe = contract.subscribe('greet', secondGreetListener)
+
+  unsubscribe()
+
+  contract.push('greet', 'John')
+  expect(firstGreetListener).not.toHaveBeenCalled()
+  expect(secondGreetListener).toHaveBeenCalledTimes(1)
+  expect(secondGreetListener).toHaveBeenCalledWith('John')
+
+  secondUnsubscribe()
+  firstGreetListener.mockReset()
+  secondGreetListener.mockReset()
+
+  contract.push('greet', 'John')
+  expect(firstGreetListener).not.toHaveBeenCalled()
+  expect(secondGreetListener).not.toHaveBeenCalled()
+})

@@ -34,6 +34,7 @@ export class EventContract<Events extends EventsMap = {}> {
 
   /**
    * Subscribes to the given event type.
+   * Returns an unsubscribe function that removes this particular listener.
    *
    * @example
    * contract.subscribe('greet', (name) => console.log(name))
@@ -41,13 +42,15 @@ export class EventContract<Events extends EventsMap = {}> {
   public subscribe<Type extends keyof Events & string>(
     type: Type,
     listener: (data: Events[Type]) => void
-  ): void {
+  ): ContractUnsubscribeFunction {
     const unsubscribe = this.options.subscribe(type, listener.bind(listener))
 
     this.subscriptions.set(
       type,
       (this.subscriptions.get(type) || new Map()).set(listener, unsubscribe)
     )
+
+    return () => this.unsubscribe(type, listener)
   }
 
   /**

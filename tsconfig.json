@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "esnext",
+    "module": "es2015",
+    "noEmit": true,
+    "declaration": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/EventContract.ts"],
+  "exclude": ["node_modules"]
+}

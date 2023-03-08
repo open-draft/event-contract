@@ -1,0 +1,29 @@
+{
+  "name": "event-contract",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "module": "lib/index.mjs",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "event",
+    "contract",
+    "type",
+    "safe",
+    "subscribe",
+    "unsubscribe",
+    "push"
+  ],
+  "author": "Artem Zakharchenko",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^6.6.3",
+    "typescript": "^4.9.5",
+    "vitest": "^0.29.2"
+  }
+}

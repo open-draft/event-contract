@@ -6,6 +6,7 @@ specifiers:
   tsup: ^6.6.3
   typescript: ^4.9.5
   vitest: ^0.29.2
+  zod: ^3.21.4
 
 devDependencies:
   '@ossjs/release': 0.5.0
@@ -13,6 +14,7 @@ devDependencies:
   tsup: 6.6.3_typescript@4.9.5
   typescript: 4.9.5
   vitest: 0.29.2
+  zod: 3.21.4
 
 packages:
 
@@ -2548,4 +2550,8 @@ packages:
   /yocto-queue/1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
+    dev: true
+
+  /zod/3.21.4:
+    resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
     dev: true

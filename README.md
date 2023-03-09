@@ -17,6 +17,8 @@ TypeScript will not warn or throw despite us making an obvious mistake above. Th
 
 I am convinced that event-based system must be as strict as possible. You don't want to dispatch events you don't expect to handle. The data transferred in those events must be clearly defined. Type-safety must be achieved on build-time with TypeScript. This is precisely what this framework does.
 
+While build-time type-safety is useful, it can be circumvented, opening the event contract to runtime errors. That's why this framework also comes with the support for a runtime schema validation for emitted data.
+
 ## Getting started
 
 ### Install
@@ -40,25 +42,27 @@ In the context of `EventTarget`, we handle `push()` by `target.dispatchEvent()`,
 const target = new EventTarget()
 
 new EventContract({
-  push(type, data) {
-    // Translate pushing a new event to dispatching
-    // a "MessageEvent" on this event target.
-    target.dispatchEvent(new MessageEvent(type, { data }))
-  },
-  subscribe(type, next) {
-    const handler = (event: Event) => {
-      if (event instanceof MessageEvent) {
-        next(event.data)
+  transport: {
+    push(type, data) {
+      // Translate pushing a new event to dispatching
+      // a "MessageEvent" on this event target.
+      target.dispatchEvent(new MessageEvent(type, { data }))
+    },
+    subscribe(type, next) {
+      const handler = (event: Event) => {
+        if (event instanceof MessageEvent) {
+          next(event.data)
+        }
       }
-    }
 
-    // Add a new listener when a subscription occurs.
-    target.addEventListener(type, handler)
+      // Add a new listener when a subscription occurs.
+      target.addEventListener(type, handler)
 
-    return () => {
-      // Unsubscribe from this by removing the listener.
-      target.removeEventListener(type, handler)
-    }
+      return () => {
+        // Unsubscribe from this by removing the listener.
+        target.removeEventListener(type, handler)
+      }
+    },
   },
 })
 ```
@@ -67,20 +71,67 @@ new EventContract({
 
 Note that this is an example implementation. This framework exports a set of [Default transfers](#default-transfers) that you should use for event contracts over standard JavaScript API.
 
+### Events map
+
+#### (Recommended) Combined
+
+We highly recommend describing the events of your contract using the `schema` option of the `EventContract` constructor.
+
+```ts
+import { z } from 'zod'
+import { EventContract, eventTargetTransport } from 'event-contract'
+
+const contract = new EventContract({
+  transport: eventTargetTransport(),
+  schema: {
+    greet: z.string(),
+  },
+})
+
+contract.push('greet', 'John') // ✅
+contract.push('greet', 123) // ❌
+```
+
+Created event contract automatically infers event type and payload types from the Zod schema you provide. This gives you both build-time and runtime safety, end-to-end.
+
+#### Type-only
+
+You can opt-out from runtime validation by not providing the `schema` property to your event contract. In that case, you can still annotate expected event types and their payloads by providing an `EventsMap` generic to the `EventContract` constructor:
+
+```ts
+type MyEvents = {
+  greet: string
+}
+
+const contract = new EventsContract<MyEvents>({ transport })
+contract.subscribe('greet', (name) => name.toUpperCase()
+
+contract.push('greet', 'John') // ✅ OK!
+contract.push('greet', 123) // ❌ "number" is not assignable to type "string"
+```
+
+> This approach doesn't provide any runtime data validation so we highly recommend using a [Combined events map](#recommended-combined).
+
+---
+
 ## Default transfers
 
 This framework comes with a list of default transfers that implement event contract using various built-in APIs.
 
-- `useEventTarget()`
-- `useBroadcastChannel()`
+- `eventTargetTransport()`
+- `broadcastChannelTransport()`
 
 Each built-in transport is a function that returns the event contract options. Provide those options to the `EventContract` constructor to use that transport.
 
 ```ts
-import { EventContract, useEventTarget } from 'event-contract'
+import { EventContract, eventTargetTransport } from 'event-contract'
 
-const contract = new EventContract<{ greet: string }>(useEventTarget())
+const contract = new EventContract<{ greet: string }>({
+  transport: eventTargetTransport(),
+})
 ```
+
+---
 
 ## API
 
@@ -92,15 +143,17 @@ type Events = {
 }
 
 const contract = new EventContract<Events>({
-  push(type, data) {
-    // Describe how events should be emitted.
-  },
-  subscribe(type, next) {
-    // Attach a listener when a subscription occurs.
+  transport: {
+    push(type, data) {
+      // Describe how events should be emitted.
+    },
+    subscribe(type, next) {
+      // Attach a listener when a subscription occurs.
 
-    return () => {
-      // Describe how to unsubscribe from this subscription.
-    }
+      return () => {
+        // Describe how to unsubscribe from this subscription.
+      }
+    },
   },
 })
 ```

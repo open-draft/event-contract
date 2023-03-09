@@ -1,15 +1,27 @@
+import type { ZodType } from 'zod'
+
 export type EventsMap = { [type: string]: unknown }
 
 export type ContractListener<Data> = (data: Data) => void
 export type ContractUnsubscribeFunction = () => void
 
-export interface ContractOptions<Events extends EventsMap = {}> {
-  push<Type extends keyof Events & string>(type: Type, data: Events[Type]): void
+export type ContractSchema<Events extends EventsMap> = {
+  [K in keyof Events]: ZodType<Events[K]>
+}
 
-  subscribe<Type extends keyof Events & string>(
-    type: Type,
-    callback: ContractListener<Events[Type]>
-  ): ContractUnsubscribeFunction
+export interface ContractOptions<Events extends EventsMap = {}> {
+  schema?: ContractSchema<Events>
+  transport: {
+    push<Type extends keyof Events & string>(
+      type: Type,
+      data: Events[Type]
+    ): void
+
+    subscribe<Type extends keyof Events & string>(
+      type: Type,
+      callback: ContractListener<Events[Type]>
+    ): ContractUnsubscribeFunction
+  }
 }
 
 export class EventContract<Events extends EventsMap = {}> {
@@ -29,7 +41,8 @@ export class EventContract<Events extends EventsMap = {}> {
     type: Type,
     data: Events[Type]
   ): void {
-    this.options.push(type, data)
+    this.validateInput(type, data)
+    this.options.transport.push(type, data)
   }
 
   /**
@@ -43,7 +56,10 @@ export class EventContract<Events extends EventsMap = {}> {
     type: Type,
     listener: (data: Events[Type]) => void
   ): ContractUnsubscribeFunction {
-    const unsubscribe = this.options.subscribe(type, listener.bind(listener))
+    const unsubscribe = this.options.transport.subscribe(
+      type,
+      listener.bind(listener)
+    )
 
     this.subscriptions.set(
       type,
@@ -101,5 +117,38 @@ export class EventContract<Events extends EventsMap = {}> {
     }
 
     typeSubscriptions.delete(listener)
+  }
+
+  private validateInput<Type extends keyof Events & string>(
+    type: Type,
+    data: Events[Type]
+  ): void {
+    if (this.options.schema == null) {
+      return
+    }
+
+    const validate = this.options.schema[type]
+
+    if (validate == null) {
+      throw new Error(
+        `Failed to push the "${type}" event: no schema has been defined for this event type`
+      )
+    }
+
+    const parsedResult = validate.safeParse(data)
+    if (parsedResult.success) {
+      return
+    }
+
+    if (!parsedResult.success) {
+      console.error(parsedResult.error.format())
+
+      throw new TypeError(
+        `Failed to push event "${type}": provided data violates the schema`,
+        {
+          cause: parsedResult.error,
+        }
+      )
+    }
   }
 }

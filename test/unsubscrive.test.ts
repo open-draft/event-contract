@@ -1,4 +1,4 @@
-import { EventContract, useEventTarget } from '../lib'
+import { EventContract, eventTargetTransport } from '../lib'
 
 type Events = {
   greet: string
@@ -6,7 +6,9 @@ type Events = {
 }
 
 it('unsubscribes from a single listener of the given event type', () => {
-  const contract = new EventContract<Events>(useEventTarget())
+  const contract = new EventContract<Events>({
+    transport: eventTargetTransport(),
+  })
 
   const firstGreetListener = vi.fn()
   const secondGreetListener = vi.fn()
@@ -30,7 +32,9 @@ it('unsubscribes from a single listener of the given event type', () => {
 })
 
 it('unsubscribes from all listeners of the given event type', () => {
-  const contract = new EventContract<Events>(useEventTarget())
+  const contract = new EventContract<Events>({
+    transport: eventTargetTransport(),
+  })
 
   const firstGreetListener = vi.fn()
   const secondGreetListener = vi.fn()
@@ -53,7 +57,9 @@ it('unsubscribes from all listeners of the given event type', () => {
 })
 
 it('unsubscribes from all events of all event types', () => {
-  const contract = new EventContract<Events>(useEventTarget())
+  const contract = new EventContract<Events>({
+    transport: eventTargetTransport(),
+  })
 
   const firstGreetListener = vi.fn()
   const secondGreetListener = vi.fn()
@@ -74,7 +80,9 @@ it('unsubscribes from all events of all event types', () => {
 })
 
 it('unsubscribes from the listener using the function returned from it', () => {
-  const contract = new EventContract<Events>(useEventTarget())
+  const contract = new EventContract<Events>({
+    transport: eventTargetTransport(),
+  })
 
   const firstGreetListener = vi.fn()
   const secondGreetListener = vi.fn()

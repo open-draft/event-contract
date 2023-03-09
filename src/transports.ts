@@ -1,8 +1,8 @@
 import { ContractOptions, EventsMap } from './EventContract'
 
-export function useEventTarget<
+export const eventTargetTransport = <
   Events extends EventsMap = {}
->(): ContractOptions<Events> {
+>(): ContractOptions<Events>['transport'] => {
   const target = new EventTarget()
 
   return {
@@ -21,9 +21,9 @@ export function useEventTarget<
   }
 }
 
-export function useBroadcastChannel<Events extends EventsMap = {}>(
+export function broadcastChannelTransport<Events extends EventsMap = {}>(
   name: string
-): ContractOptions<Events> {
+): ContractOptions<Events>['transport'] {
   const channel = new BroadcastChannel(name)
 
   return {

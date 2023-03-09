@@ -1,4 +1,4 @@
-import { EventContract, useEventTarget } from '..'
+import { EventContract, eventTargetTransport } from '..'
 
 type Events = {
   greet: string
@@ -6,7 +6,9 @@ type Events = {
 }
 
 it('dispatches relevant event listeners', () => {
-  const contract = new EventContract<Events>(useEventTarget())
+  const contract = new EventContract<Events>({
+    transport: eventTargetTransport(),
+  })
 
   const firstGreetListener = vi.fn()
   const secondGreetListener = vi.fn()

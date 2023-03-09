@@ -1,7 +1,38 @@
 import { z } from 'zod'
 import { Emitter } from '../lib'
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('eventNames()', () => {
+  it('returns a single known event name', () => {
+    const emitter = new Emitter({ greet: z.string() })
+    emitter.on('greet', vi.fn())
+
+    expect(emitter.eventNames()).toEqual(['greet'])
+  })
+
+  it('returns all registered event names', () => {
+    const emitter = new Emitter({
+      greet: z.string(),
+      bye: z.string(),
+    })
+    emitter.on('greet', vi.fn())
+    emitter.on('bye', vi.fn())
+
+    expect(emitter.eventNames()).toEqual(['greet', 'bye'])
+  })
+
+  it('returns an empty array given no registered event names', () => {
+    const emitter = new Emitter({})
+    expect(emitter.eventNames()).toEqual([])
+  })
+})
+
 it('validates emitted events against the schema', () => {
+  vi.spyOn(console, 'error').mockImplementation(() => void 0)
+
   const emitter = new Emitter({
     greet: z.object({
       name: z.string(),

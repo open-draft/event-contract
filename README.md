@@ -17,6 +17,8 @@ TypeScript will not warn or throw despite us making an obvious mistake above. Th
 
 I am convinced that event-based system must be as strict as possible. You don't want to dispatch events you don't expect to handle. The data transferred in those events must be clearly defined. Type-safety must be achieved on build-time with TypeScript. This is precisely what this framework does.
 
+While build-time type-safety is useful, it can be circumvented, opening the event contract to runtime errors. That's why this framework also comes with the support for a runtime schema validation for emitted data.
+
 ## Getting started
 
 ### Install
@@ -67,6 +69,49 @@ new EventContract({
 
 Note that this is an example implementation. This framework exports a set of [Default transfers](#default-transfers) that you should use for event contracts over standard JavaScript API.
 
+### Events map
+
+#### (Recommended) Combined
+
+We highly recommend describing the events of your contract using the `schema` option of the `EventContract` constructor.
+
+```ts
+import { z } from 'zod'
+import { EventContract, useEventTarget } from 'event-contract'
+
+const contract = new EventContract({
+  ...useEventTarget(),
+  schema: {
+    greet: z.string(),
+  },
+})
+
+contract.push('greet', 'John') // ✅
+contract.push('greet', 123) // ❌
+```
+
+Created event contract automatically infers event type and payload types from the Zod schema you provide. This gives you both build-time and runtime safety, end-to-end.
+
+#### Type-only
+
+You can opt-out from runtime validation by not providing the `schema` property to your event contract. In that case, you can still annotate expected event types and their payloads by providing an `EventsMap` generic to the `EventContract` constructor:
+
+```ts
+type MyEvents = {
+  greet: string
+}
+
+const contract = new EventsContract<MyEvents>(...transport)
+contract.subscribe('greet', (name) => name.toUpperCase()
+
+contract.push('greet', 'John') // ✅ OK!
+contract.push('greet', 123) // ❌ "number" is not assignable to type "string"
+```
+
+> This approach doesn't provide any runtime data validation so we highly recommend using a [Combined events map](#recommended-combined).
+
+---
+
 ## Default transfers
 
 This framework comes with a list of default transfers that implement event contract using various built-in APIs.
@@ -81,6 +126,8 @@ import { EventContract, useEventTarget } from 'event-contract'
 
 const contract = new EventContract<{ greet: string }>(useEventTarget())
 ```
+
+---
 
 ## API
 

@@ -11,13 +11,17 @@ export type ContractSchema<Events extends EventsMap> = {
 
 export interface ContractOptions<Events extends EventsMap = {}> {
   schema?: ContractSchema<Events>
+  transport: {
+    push<Type extends keyof Events & string>(
+      type: Type,
+      data: Events[Type]
+    ): void
 
-  push<Type extends keyof Events & string>(type: Type, data: Events[Type]): void
-
-  subscribe<Type extends keyof Events & string>(
-    type: Type,
-    callback: ContractListener<Events[Type]>
-  ): ContractUnsubscribeFunction
+    subscribe<Type extends keyof Events & string>(
+      type: Type,
+      callback: ContractListener<Events[Type]>
+    ): ContractUnsubscribeFunction
+  }
 }
 
 export class EventContract<Events extends EventsMap = {}> {
@@ -38,7 +42,7 @@ export class EventContract<Events extends EventsMap = {}> {
     data: Events[Type]
   ): void {
     this.validateInput(type, data)
-    this.options.push(type, data)
+    this.options.transport.push(type, data)
   }
 
   /**
@@ -52,7 +56,10 @@ export class EventContract<Events extends EventsMap = {}> {
     type: Type,
     listener: (data: Events[Type]) => void
   ): ContractUnsubscribeFunction {
-    const unsubscribe = this.options.subscribe(type, listener.bind(listener))
+    const unsubscribe = this.options.transport.subscribe(
+      type,
+      listener.bind(listener)
+    )
 
     this.subscriptions.set(
       type,

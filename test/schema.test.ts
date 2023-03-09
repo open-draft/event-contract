@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EventContract, useEventTarget } from '../lib'
+import { EventContract, eventTargetTransport } from '../lib'
 
 beforeAll(() => {
   vi.spyOn(console, 'error').mockImplementation(() => void 0)
@@ -11,7 +11,7 @@ afterAll(() => {
 
 it('validates pushed data against the schema', () => {
   const contract = new EventContract({
-    ...useEventTarget(),
+    transport: eventTargetTransport(),
     schema: {
       greet: z.string(),
     },
@@ -36,7 +36,7 @@ it('validates pushed data against the schema', () => {
 
 it('validates nested data structures', () => {
   const contract = new EventContract({
-    ...useEventTarget(),
+    transport: eventTargetTransport(),
     schema: {
       greet: z.object({
         name: z.string(),

@@ -1,5 +1,5 @@
 import { EventContract, EventsMap } from './EventContract'
-import { useEventTarget } from './transports'
+import { eventTargetTransport } from './transports'
 
 export type EventListener<Data> = (data: Data) => void
 
@@ -7,7 +7,9 @@ export class Emitter<Events extends EventsMap> {
   protected contract: EventContract<Events>
 
   constructor() {
-    this.contract = new EventContract<Events>(useEventTarget())
+    this.contract = new EventContract<Events>({
+      transport: eventTargetTransport(),
+    })
   }
 
   public on<Type extends keyof Events & string>(

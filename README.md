@@ -42,25 +42,27 @@ In the context of `EventTarget`, we handle `push()` by `target.dispatchEvent()`,
 const target = new EventTarget()
 
 new EventContract({
-  push(type, data) {
-    // Translate pushing a new event to dispatching
-    // a "MessageEvent" on this event target.
-    target.dispatchEvent(new MessageEvent(type, { data }))
-  },
-  subscribe(type, next) {
-    const handler = (event: Event) => {
-      if (event instanceof MessageEvent) {
-        next(event.data)
+  transport: {
+    push(type, data) {
+      // Translate pushing a new event to dispatching
+      // a "MessageEvent" on this event target.
+      target.dispatchEvent(new MessageEvent(type, { data }))
+    },
+    subscribe(type, next) {
+      const handler = (event: Event) => {
+        if (event instanceof MessageEvent) {
+          next(event.data)
+        }
       }
-    }
 
-    // Add a new listener when a subscription occurs.
-    target.addEventListener(type, handler)
+      // Add a new listener when a subscription occurs.
+      target.addEventListener(type, handler)
 
-    return () => {
-      // Unsubscribe from this by removing the listener.
-      target.removeEventListener(type, handler)
-    }
+      return () => {
+        // Unsubscribe from this by removing the listener.
+        target.removeEventListener(type, handler)
+      }
+    },
   },
 })
 ```
@@ -77,10 +79,10 @@ We highly recommend describing the events of your contract using the `schema` op
 
 ```ts
 import { z } from 'zod'
-import { EventContract, useEventTarget } from 'event-contract'
+import { EventContract, eventTargetTransport } from 'event-contract'
 
 const contract = new EventContract({
-  ...useEventTarget(),
+  transport: eventTargetTransport(),
   schema: {
     greet: z.string(),
   },
@@ -101,7 +103,7 @@ type MyEvents = {
   greet: string
 }
 
-const contract = new EventsContract<MyEvents>(...transport)
+const contract = new EventsContract<MyEvents>({ transport })
 contract.subscribe('greet', (name) => name.toUpperCase()
 
 contract.push('greet', 'John') // ✅ OK!
@@ -116,15 +118,17 @@ contract.push('greet', 123) // ❌ "number" is not assignable to type "string"
 
 This framework comes with a list of default transfers that implement event contract using various built-in APIs.
 
-- `useEventTarget()`
-- `useBroadcastChannel()`
+- `eventTargetTransport()`
+- `broadcastChannelTransport()`
 
 Each built-in transport is a function that returns the event contract options. Provide those options to the `EventContract` constructor to use that transport.
 
 ```ts
-import { EventContract, useEventTarget } from 'event-contract'
+import { EventContract, eventTargetTransport } from 'event-contract'
 
-const contract = new EventContract<{ greet: string }>(useEventTarget())
+const contract = new EventContract<{ greet: string }>({
+  transport: eventTargetTransport(),
+})
 ```
 
 ---
@@ -139,15 +143,17 @@ type Events = {
 }
 
 const contract = new EventContract<Events>({
-  push(type, data) {
-    // Describe how events should be emitted.
-  },
-  subscribe(type, next) {
-    // Attach a listener when a subscription occurs.
+  transport: {
+    push(type, data) {
+      // Describe how events should be emitted.
+    },
+    subscribe(type, next) {
+      // Attach a listener when a subscription occurs.
 
-    return () => {
-      // Describe how to unsubscribe from this subscription.
-    }
+      return () => {
+        // Describe how to unsubscribe from this subscription.
+      }
+    },
   },
 })
 ```

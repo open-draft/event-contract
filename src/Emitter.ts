@@ -1,4 +1,4 @@
-import { EventContract, EventsMap } from './EventContract'
+import { ContractSchema, EventContract, EventsMap } from './EventContract'
 import { eventTargetTransport } from './transports'
 
 export type EventListener<Data> = (data: Data) => void
@@ -6,10 +6,19 @@ export type EventListener<Data> = (data: Data) => void
 export class Emitter<Events extends EventsMap> {
   protected contract: EventContract<Events>
 
-  constructor() {
+  constructor(schema: ContractSchema<Events>) {
     this.contract = new EventContract<Events>({
       transport: eventTargetTransport(),
+      schema,
     })
+  }
+
+  public emit<Type extends keyof Events & string>(
+    type: Type,
+    data: Events[Type]
+  ): this {
+    this.contract.push(type, data)
+    return this
   }
 
   public on<Type extends keyof Events & string>(
